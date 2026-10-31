@@ -103,7 +103,7 @@ All demo passwords are `Password@123`.
 | --- | --- |
 | Admin | admin@brightloop.test |
 | Staff | staff@brightloop.test |
-| Customer | any customer created by `seed`, or sign up with your own email |
+| Customer | customer@brightloop.test |
 
 ## Useful commands
 
