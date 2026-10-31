@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Create Customer Account - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-7 col-lg-6">
+        <div class="card shadow-sm border-0 p-4 bg-white">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus-fill text-primary" style="font-size: 3rem;"></i>
+                <h2 class="h3 fw-bold mt-2">Create Customer Account</h2>
+                <p class="text-muted small">Register to manage your software subscriptions and invoices</p>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2">
+                        {% for error in form.non_field_errors %}
+                            <div><i class="bi bi-exclamation-triangle-fill me-1"></i> {{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.full_name.id_for_label }}" class="form-label fw-semibold">Full Name</label>
+                    {{ form.full_name }}
+                    {% if form.full_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Email Address</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.phone.id_for_label }}" class="form-label fw-semibold">Phone Number <span class="text-muted fw-normal">(Optional)</span></label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold">Password</label>
+                    {{ form.password }}
+                    <!-- Live hints for password requirements -->
+                    <div class="mt-2 p-2 bg-light rounded border small">
+                        <div class="fw-semibold text-muted mb-1"><i class="bi bi-info-circle me-1"></i> Password Requirements:</div>
+                        <ul class="mb-0 ps-3 text-muted" id="password-requirements">
+                            <li id="req-len">More than 8 characters (at least 9 characters)</li>
+                            <li id="req-upper">At least one uppercase letter (A-Z)</li>
+                            <li id="req-lower">At least one lowercase letter (a-z)</li>
+                            <li id="req-special">At least one special character (e.g. !@#$%^&*)</li>
+                        </ul>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label for="{{ form.confirm_password.id_for_label }}" class="form-label fw-semibold">Confirm Password</label>
+                    {{ form.confirm_password }}
+                    {% if form.confirm_password.errors %}
+                        <div class="text-danger small mt-1">{{ form.confirm_password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-check-circle me-2"></i>Register & Access Portal
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-4 pt-3 border-top">
+                <p class="text-muted small mb-0">
+                    Already have an account? <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">Sign in here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live password hint validator
+    document.addEventListener("DOMContentLoaded", function() {
+        const pwdInput = document.getElementById("id_password");
+        if (!pwdInput) return;
+
+        const reqLen = document.getElementById("req-len");
+        const reqUpper = document.getElementById("req-upper");
+        const reqLower = document.getElementById("req-lower");
+        const reqSpecial = document.getElementById("req-special");
+
+        function updateRequirement(el, isValid) {
+            if (isValid) {
+                el.classList.remove("text-muted", "text-danger");
+                el.classList.add("text-success", "fw-bold");
+            } else {
+                el.classList.remove("text-success", "fw-bold");
+                el.classList.add("text-muted");
+            }
+        }
+
+        pwdInput.addEventListener("input", function() {
+            const val = pwdInput.value;
+            updateRequirement(reqLen, val.length > 8);
+            updateRequirement(reqUpper, /[A-Z]/.test(val));
+            updateRequirement(reqLower, /[a-z]/.test(val));
+            updateRequirement(reqSpecial, /[^a-zA-Z0-9\s]/.test(val));
+        });
+    });
+</script>
+{% endblock %}

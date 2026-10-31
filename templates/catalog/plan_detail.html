@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}{{ plan.name }} - Plan Details - Brightloop{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{% url 'catalog:plan_list' %}" class="text-decoration-none">Plans</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ plan.name }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex align-items-center gap-3">
+            <h1 class="h3 fw-bold mb-0">{{ plan.name }}</h1>
+            {% if plan.computed_status == 'Available' %}
+                <span class="badge bg-success-subtle text-success fs-6">Available</span>
+            {% elif plan.computed_status == 'Upcoming' %}
+                <span class="badge bg-info-subtle text-info fs-6">Upcoming</span>
+            {% elif plan.computed_status == 'Paused' %}
+                <span class="badge bg-warning-subtle text-warning fs-6">Paused</span>
+            {% elif plan.computed_status == 'Expired' %}
+                <span class="badge bg-danger-subtle text-danger fs-6">Expired</span>
+            {% else %}
+                <span class="badge bg-secondary-subtle text-secondary fs-6">Inactive</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'catalog:plan_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+        {% if user.is_admin %}
+            <a href="{% url 'catalog:plan_edit' pk=plan.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i>Edit Plan
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Plan Specifications -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 p-4 bg-white h-100">
+            <h2 class="h5 fw-bold mb-3"><i class="bi bi-sliders text-primary me-2"></i>Plan Specifications</h2>
+            <ul class="list-group list-group-flush mb-0">
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span class="text-muted">Billing Period:</span>
+                    <span class="badge bg-light text-dark border text-uppercase">{{ plan.get_billing_period_display }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span class="text-muted">Subscription Price:</span>
+                    <span class="fw-bold fs-5 text-dark">₹{{ plan.price }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span class="text-muted">Minimum Seats / Quantity:</span>
+                    <span class="fw-semibold">{{ plan.min_quantity }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span class="text-muted">Available From:</span>
+                    <span>{{ plan.available_from|date:"F d, Y" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span class="text-muted">Available To:</span>
+                    <span>{{ plan.available_to|date:"F d, Y" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between px-0">
+                    <span class="text-muted">Catalog Status:</span>
+                    {% if plan.is_active %}
+                        <span class="badge bg-success-subtle text-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary">Deactivated</span>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Lifecycle Flags & Actions Card -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 p-4 bg-white h-100">
+            <h2 class="h5 fw-bold mb-3"><i class="bi bi-arrow-repeat text-primary me-2"></i>Lifecycle Controls</h2>
+
+            <!-- Configured Flags -->
+            <div class="mb-4">
+                <span class="fw-semibold small text-muted d-block mb-2">Configured Rules & Capabilities:</span>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge {% if plan.closable %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                        <i class="bi {% if plan.closable %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i> Closable Early
+                    </span>
+                    <span class="badge {% if plan.pausable %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                        <i class="bi {% if plan.pausable %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i> Pausable
+                    </span>
+                    <span class="badge {% if plan.renewable %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                        <i class="bi {% if plan.renewable %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i> Renewable
+                    </span>
+                    <span class="badge {% if plan.auto_close %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                        <i class="bi {% if plan.auto_close %}bi-check-circle{% else %}bi-x-circle{% endif %} me-1"></i> Auto-Close on Expiry
+                    </span>
+                </div>
+            </div>
+
+            {% if user.is_admin %}
+                <hr>
+                <h3 class="h6 fw-bold mb-3">Admin Lifecycle Actions</h3>
+                <div class="d-flex flex-column gap-2">
+                    <!-- Early Close Button -->
+                    {% if plan.closable %}
+                        <form method="post" action="{% url 'catalog:plan_action' pk=plan.pk action='close' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger w-100 text-start" onclick="return confirm('Are you sure you want to close this plan early?');">
+                                <i class="bi bi-x-octagon me-2"></i> Close Plan Early
+                            </button>
+                        </form>
+                    {% else %}
+                        <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Early closure is disabled for this plan (closable flag is off).">
+                            <button class="btn btn-outline-secondary w-100 text-start" disabled>
+                                <i class="bi bi-x-octagon me-2"></i> Close Plan Early (Disabled)
+                            </button>
+                        </span>
+                    {% endif %}
+
+                    <!-- Pause / Resume Button -->
+                    {% if plan.pausable %}
+                        {% if plan.is_paused %}
+                            <form method="post" action="{% url 'catalog:plan_action' pk=plan.pk action='resume' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-success w-100 text-start">
+                                    <i class="bi bi-play-circle me-2"></i> Resume Plan
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{% url 'catalog:plan_action' pk=plan.pk action='pause' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-warning w-100 text-start">
+                                    <i class="bi bi-pause-circle me-2"></i> Pause Plan
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Pause/Resume is disabled for this plan (pausable flag is off).">
+                            <button class="btn btn-outline-secondary w-100 text-start" disabled>
+                                <i class="bi bi-pause-circle me-2"></i> Pause / Resume Plan (Disabled)
+                            </button>
+                        </span>
+                    {% endif %}
+
+                    <!-- Renew Plan Button & Modal -->
+                    {% if plan.renewable %}
+                        <button type="button" class="btn btn-outline-primary w-100 text-start" data-bs-toggle="modal" data-bs-target="#renewModal">
+                            <i class="bi bi-arrow-repeat me-2"></i> Renew Plan Expiration Date...
+                        </button>
+                    {% else %}
+                        <span class="d-inline-block w-100" tabindex="0" data-bs-toggle="tooltip" title="Renewal is disabled for this plan (renewable flag is off).">
+                            <button class="btn btn-outline-secondary w-100 text-start" disabled>
+                                <i class="bi bi-arrow-repeat me-2"></i> Renew Plan Expiration Date (Disabled)
+                            </button>
+                        </span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Renew Modal -->
+{% if plan.renewable %}
+<div class="modal fade" id="renewModal" tabindex="-1" aria-labelledby="renewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'catalog:plan_action' pk=plan.pk action='renew' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="renewModalLabel">Renew Plan: {{ plan.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Current Expiration Date: <strong>{{ plan.available_to|date:"F d, Y" }}</strong></p>
+                    <div class="mb-3">
+                        <label for="new_available_to" class="form-label fw-semibold">New Expiration Date (Available To)</label>
+                        <input type="date" name="new_available_to" id="new_available_to" class="form-control" required min="{{ plan.available_to|date:'Y-m-d' }}">
+                        <div class="form-text">Must be a date after the current expiration date.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Renewal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    // Initialize tooltips
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

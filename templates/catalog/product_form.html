@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit Product{% else %}Create Product{% endif %} - Brightloop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-3">
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h4 fw-bold mb-0">
+                    <i class="bi bi-box-seam text-primary me-2"></i>
+                    {% if form.instance.pk %}Edit Product: {{ form.instance.name }}{% else %}New Product{% endif %}
+                </h1>
+                <a href="{% url 'catalog:product_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Products
+                </a>
+            </div>
+
+            <form method="post" novalidate id="product-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Core Details Section -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">Product Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.product_type.id_for_label }}" class="form-label fw-semibold">Product Type</label>
+                        {{ form.product_type }}
+                        {% if form.product_type.errors %}
+                            <div class="text-danger small mt-1">{{ form.product_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Pricing & Tax Section -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="{{ form.sales_price.id_for_label }}" class="form-label fw-semibold">Sales Price (₹)</label>
+                        {{ form.sales_price }}
+                        <div class="form-text small">Base customer sales price (non-negative).</div>
+                        {% if form.sales_price.errors %}
+                            <div class="text-danger small mt-1">{{ form.sales_price.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.cost_price.id_for_label }}" class="form-label fw-semibold">Cost Price (₹)</label>
+                        {{ form.cost_price }}
+                        <div class="form-text small">Internal product cost.</div>
+                        {% if form.cost_price.errors %}
+                            <div class="text-danger small mt-1">{{ form.cost_price.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ form.tax.id_for_label }}" class="form-label fw-semibold">Tax Rule</label>
+                        {{ form.tax }}
+                        {% if form.tax.errors %}
+                            <div class="text-danger small mt-1">{{ form.tax.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label fw-semibold">Notes / Description</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4 form-check">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label fw-semibold">
+                        Active Product
+                    </label>
+                </div>
+
+                <!-- Product Variants Inline Formset (Available on Edit) -->
+                {% if variant_formset %}
+                    <div class="border rounded-3 p-3 bg-light-subtle mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">
+                                <i class="bi bi-diagram-3 text-primary me-2"></i>Product Variants
+                            </h5>
+                            <span class="small text-muted">e.g. Attribute: Brand, Value: Odoo, Extra Price: 560.00</span>
+                        </div>
+
+                        {{ variant_formset.management_form }}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered bg-white align-middle mb-0" id="variants-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 25%;">Attribute (e.g. Brand)</th>
+                                        <th style="width: 25%;">Value (e.g. Odoo)</th>
+                                        <th style="width: 20%;">Extra Price (₹)</th>
+                                        <th style="width: 20%;">Effective Price</th>
+                                        <th style="width: 10%; text-align: center;">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for v_form in variant_formset %}
+                                        <tr class="variant-row">
+                                            <td>
+                                                {{ v_form.id }}
+                                                {{ v_form.attribute }}
+                                                {% if v_form.attribute.errors %}
+                                                    <div class="text-danger small">{{ v_form.attribute.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ v_form.value }}
+                                                {% if v_form.value.errors %}
+                                                    <div class="text-danger small">{{ v_form.value.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ v_form.extra_price }}
+                                                {% if v_form.extra_price.errors %}
+                                                    <div class="text-danger small">{{ v_form.extra_price.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="effective-price-display fw-bold text-success fs-6">₹0.00</span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if v_form.instance.pk %}
+                                                    {{ v_form.DELETE }}
+                                                {% else %}
+                                                    <span class="text-muted small">New</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i>Save Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live calculation of Effective Price (Base sales price + variant extra price)
+    document.addEventListener("DOMContentLoaded", function() {
+        const salesPriceInput = document.getElementById("id_sales_price");
+
+        function updateEffectivePrices() {
+            const basePrice = parseFloat(salesPriceInput ? salesPriceInput.value : 0) || 0;
+            const rows = document.querySelectorAll(".variant-row");
+
+            rows.forEach(function(row) {
+                const extraInput = row.querySelector("input[name$='-extra_price']");
+                const displaySpan = row.querySelector(".effective-price-display");
+                if (extraInput && displaySpan) {
+                    const extraVal = parseFloat(extraInput.value) || 0;
+                    const effective = basePrice + extraVal;
+                    displaySpan.textContent = "₹" + effective.toFixed(2);
+                }
+            });
+        }
+
+        if (salesPriceInput) {
+            salesPriceInput.addEventListener("input", updateEffectivePrices);
+        }
+
+        document.querySelectorAll("input[name$='-extra_price']").forEach(function(input) {
+            input.addEventListener("input", updateEffectivePrices);
+        });
+
+        updateEffectivePrices();
+    });
+</script>
+{% endblock %}

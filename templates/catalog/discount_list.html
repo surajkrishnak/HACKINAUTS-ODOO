@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Discounts - Admin - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1"><i class="bi bi-tag text-primary me-2"></i>Discount Rules</h1>
+        <p class="text-muted mb-0">Admin view: promotional codes, percentage discounts, and fixed credits.</p>
+    </div>
+    <a href="{% url 'catalog:discount_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Add New Discount
+    </a>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card shadow-sm border-0 mb-4 bg-white">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Search discounts by name...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select">
+                    <option value="">All Discount Types</option>
+                    <option value="percent" {% if type_filter == 'percent' %}selected{% endif %}>Percentage</option>
+                    <option value="fixed" {% if type_filter == 'fixed' %}selected{% endif %}>Fixed Amount</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="applies" class="form-select">
+                    <option value="">Applies To All</option>
+                    <option value="subscription" {% if applies_filter == 'subscription' %}selected{% endif %}>Subscription</option>
+                    <option value="product" {% if applies_filter == 'product' %}selected{% endif %}>Product</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary flex-grow-1">Filter</button>
+                {% if q or type_filter or applies_filter %}
+                    <a href="{% url 'catalog:discount_list' %}" class="btn btn-outline-secondary">Reset</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Discounts Table -->
+<div class="card shadow-sm border-0 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Discount Name</th>
+                    <th>Type & Value</th>
+                    <th>Applies To</th>
+                    <th>Validity Window</th>
+                    <th style="min-width: 180px;">Usage Progress</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for discount in discounts %}
+                    <tr>
+                        <td>
+                            <span class="fw-bold text-dark">{{ discount.name }}</span>
+                            {% if discount.min_purchase %}
+                                <div class="text-muted small">Min. Purchase: ₹{{ discount.min_purchase }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if discount.discount_type == 'percent' %}
+                                <span class="badge bg-primary fs-6">{{ discount.value }}% OFF</span>
+                            {% else %}
+                                <span class="badge bg-success fs-6">₹{{ discount.value }} OFF</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border text-uppercase">{{ discount.get_applies_to_display }}</span>
+                            {% if discount.product %}
+                                <div class="small text-muted text-truncate" style="max-width: 150px;">{{ discount.product.name }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">
+                            {{ discount.start_date|date:"M d, Y" }} &rarr; {{ discount.end_date|date:"M d, Y" }}
+                        </td>
+                        <td>
+                            <!-- Usage Progress Bar (times_used / usage_limit) -->
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Used: <strong>{{ discount.times_used }}</strong></span>
+                                <span>Limit: <strong>{{ discount.usage_limit }}</strong></span>
+                            </div>
+                            {% widthratio discount.times_used discount.usage_limit 100 as pct %}
+                            <div class="progress" style="height: 7px;">
+                                <div class="progress-bar {% if discount.times_used >= discount.usage_limit %}bg-danger{% elif pct|add:'0' > 75 %}bg-warning{% else %}bg-primary{% endif %}" role="progressbar" style="width: {{ pct }}%;" aria-valuenow="{{ discount.times_used }}" aria-valuemin="0" aria-valuemax="{{ discount.usage_limit }}"></div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if discount.computed_status == 'Active' %}
+                                <span class="badge bg-success-subtle text-success">Active</span>
+                            {% elif discount.computed_status == 'Scheduled' %}
+                                <span class="badge bg-info-subtle text-info">Scheduled</span>
+                            {% elif discount.computed_status == 'Exhausted' %}
+                                <span class="badge bg-danger-subtle text-danger">Exhausted</span>
+                            {% elif discount.computed_status == 'Expired' %}
+                                <span class="badge bg-secondary-subtle text-secondary">Expired</span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'catalog:discount_edit' pk=discount.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-tag fs-2 d-block mb-2"></i>
+                            No discount rules found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="card-footer bg-white border-0 py-3">
+            <nav aria-label="Discount page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if applies_filter %}&applies={{ applies_filter }}{% endif %}">Previous</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+
+                    <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if applies_filter %}&applies={{ applies_filter }}{% endif %}">Next</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

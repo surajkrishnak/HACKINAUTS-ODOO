@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription {{ subscription.number }} - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <!-- Breadcrumb & Back -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'portal:subscription_list' %}" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left me-1"></i>Back to My Subscriptions
+        </a>
+        <div class="d-flex gap-2">
+            <!-- Customer Actions -->
+            {% if can_pause %}
+                <form method="post" action="{% url 'portal:subscription_action' subscription.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="pause">
+                    <button type="submit" class="btn btn-outline-warning">
+                        <i class="bi bi-pause-circle me-1"></i>Pause Subscription
+                    </button>
+                </form>
+            {% elif can_resume %}
+                <form method="post" action="{% url 'portal:subscription_action' subscription.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="resume">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-play-circle me-1"></i>Resume Subscription
+                    </button>
+                </form>
+            {% endif %}
+
+            {% if can_close %}
+                <form method="post" action="{% url 'portal:subscription_action' subscription.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to close this subscription? Recurring billing will stop.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="close">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-x-octagon me-1"></i>Close Subscription
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold">Subscription</span>
+                    <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                        {{ subscription.number }}
+                        {% if subscription.status == 'active' %}
+                            <span class="badge bg-success fs-6">Active</span>
+                        {% elif subscription.status == 'confirmed' %}
+                            <span class="badge bg-primary fs-6">Confirmed</span>
+                        {% elif subscription.status == 'closed' %}
+                            <span class="badge bg-dark fs-6">Closed</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">{{ subscription.get_status_display }}</span>
+                        {% endif %}
+                        {% if subscription.is_paused %}
+                            <span class="badge bg-warning text-dark fs-6"><i class="bi bi-pause-circle me-1"></i>Paused</span>
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">Plan: <strong>{{ subscription.plan.name }}</strong> ({{ subscription.plan.get_billing_period_display }})</p>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small text-uppercase fw-semibold">Recurring Total</div>
+                    <div class="display-6 fw-bold text-primary">₹{{ subscription.total_amount }}</div>
+                    <div class="small text-muted">Billed {{ subscription.plan.get_billing_period_display|lower }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details & Dates -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar-event me-2 text-primary"></i>Subscription Terms</h5>
+            </div>
+            <div class="card-body px-4">
+                <table class="table table-sm table-borderless mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted w-50">Start Date:</td>
+                            <td class="fw-semibold">{{ subscription.start_date }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Expiry / Term End:</td>
+                            <td class="fw-semibold">{{ subscription.expiry_date|default:"Ongoing" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Next Scheduled Invoice:</td>
+                            <td class="fw-semibold text-primary">{{ subscription.next_billing_date|default:"&mdash;" }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Payment Terms:</td>
+                            <td>{{ subscription.get_payment_terms_display }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-check me-2 text-primary"></i>Plan Capabilities</h5>
+            </div>
+            <div class="card-body px-4">
+                <ul class="list-group list-group-flush small">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>Early Self-Closure</span>
+                        {% if subscription.plan.closable %}
+                            <span class="badge bg-success-subtle text-success border border-success">Allowed</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border">Fixed Term (Not Closable)</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>Pause / Resume Feature</span>
+                        {% if subscription.plan.pausable %}
+                            <span class="badge bg-success-subtle text-success border border-success">Supported</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border">Not Available</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>Bulk Seats Discount</span>
+                        <a href="{% url 'portal:discount_request' %}" class="btn btn-sm btn-outline-primary py-0">Request Seats &rarr;</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Included Software & Line Items -->
+<div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-box me-2 text-primary"></i>Included Software & Modules</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Product / Item</th>
+                        <th>Variant</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end pe-4">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr>
+                        <td class="ps-4 fw-semibold text-dark">{{ line.product.name }}</td>
+                        <td>
+                            {% if line.variant %}
+                                <span class="badge bg-light text-dark border">{{ line.variant.attribute }}: {{ line.variant.value }}</span>
+                            {% else %}
+                                <span class="text-muted small">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">{{ line.quantity }}</td>
+                        <td class="text-end">₹{{ line.unit_price }}</td>
+                        <td class="text-end pe-4 fw-bold text-dark">₹{{ line.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="4" class="text-end fs-6">Recurring Total:</th>
+                        <th class="text-end pe-4 fs-5 text-primary fw-bold">₹{{ subscription.total_amount }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Billing History & Invoices -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-receipt me-2 text-primary"></i>Billing Invoices</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Invoice #</th>
+                        <th>Date</th>
+                        <th>Due Date</th>
+                        <th>Period</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Balance Due</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td class="ps-4 fw-semibold">
+                            <a href="{% url 'portal:invoice_detail' inv.pk %}" class="text-decoration-none">
+                                {{ inv.number }}
+                            </a>
+                        </td>
+                        <td>{{ inv.invoice_date }}</td>
+                        <td>{{ inv.due_date }}</td>
+                        <td class="small text-muted">{{ inv.period_start }} &mdash; {{ inv.period_end }}</td>
+                        <td class="text-end fw-semibold">₹{{ inv.total }}</td>
+                        <td class="text-end">
+                            {% if inv.balance > 0 %}
+                                <span class="text-danger fw-bold">₹{{ inv.balance }}</span>
+                            {% else %}
+                                <span class="text-success">₹0.00</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if inv.status == 'paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif inv.status == 'confirmed' %}
+                                <span class="badge bg-primary">Confirmed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ inv.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'portal:invoice_detail' inv.pk %}" class="btn btn-outline-primary" title="View Invoice">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'billing:invoice_print' inv.pk %}" target="_blank" class="btn btn-outline-secondary" title="Print Invoice">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No invoices generated yet for this subscription.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

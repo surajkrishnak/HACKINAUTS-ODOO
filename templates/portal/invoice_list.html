@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}My Invoices - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-receipt me-2 text-primary"></i>My Invoices</h2>
+        <p class="text-muted mb-0">Track your billing statements, outstanding balances, and payment receipts.</p>
+    </div>
+    <div>
+        <a href="{% url 'portal:subscription_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-box-seam me-1"></i>My Subscriptions
+        </a>
+    </div>
+</div>
+
+<!-- Invoice KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white p-3 border-start border-4 border-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Outstanding Due</div>
+                    <div class="fs-4 fw-bold text-danger mt-1">₹{{ total_due|floatformat:2 }}</div>
+                </div>
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle">
+                    <i class="bi bi-cash-stack fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white p-3 border-start border-4 border-info">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Pending Unpaid Invoices</div>
+                    <div class="fs-4 fw-bold text-dark mt-1">{{ unpaid_count }}</div>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle">
+                    <i class="bi bi-hourglass-split fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoices Table -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Invoice #</th>
+                        <th>Subscription</th>
+                        <th>Invoice Date</th>
+                        <th>Due Date</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Balance Due</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td class="ps-4 fw-semibold">
+                            <a href="{% url 'portal:invoice_detail' inv.pk %}" class="text-decoration-none">
+                                {{ inv.number }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{% url 'portal:subscription_detail' inv.subscription_id %}" class="small text-decoration-none">
+                                {{ inv.subscription.number }}
+                            </a>
+                            <div class="small text-muted">{{ inv.subscription.plan.name }}</div>
+                        </td>
+                        <td>{{ inv.invoice_date }}</td>
+                        <td>
+                            <span class="{% if inv.is_overdue %}text-danger fw-bold{% endif %}">
+                                {{ inv.due_date }}
+                            </span>
+                        </td>
+                        <td class="text-end fw-semibold">₹{{ inv.total }}</td>
+                        <td class="text-end">
+                            {% if inv.balance > 0 %}
+                                <span class="text-danger fw-bold">₹{{ inv.balance }}</span>
+                            {% else %}
+                                <span class="text-success fw-semibold">₹0.00</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if inv.status == 'paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif inv.status == 'confirmed' %}
+                                {% if inv.is_overdue %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Confirmed</span>
+                                {% endif %}
+                            {% elif inv.status == 'draft' %}
+                                <span class="badge bg-secondary">Draft</span>
+                            {% elif inv.status == 'cancelled' %}
+                                <span class="badge bg-dark">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'portal:invoice_detail' inv.pk %}" class="btn btn-outline-primary" title="View Invoice">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{% url 'billing:invoice_print' inv.pk %}" target="_blank" class="btn btn-outline-secondary" title="Print Invoice">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-receipt fs-1 d-block mb-2 text-secondary"></i>
+                            <h5 class="fw-bold text-dark">No Invoices Found</h5>
+                            <p class="mb-0">You have no billing statements issued yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="card-footer bg-white border-0 py-3">
+        <nav aria-label="Customer invoices pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

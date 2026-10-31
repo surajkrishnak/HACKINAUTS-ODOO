@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Lines - {{ subscription.number }} - Brightloop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-3">
+    <div class="col-lg-9">
+        <div class="card shadow-sm border-0 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h4 fw-bold mb-1">
+                        <i class="bi bi-pencil-square text-primary me-2"></i>Edit Lines: {{ subscription.number }}
+                    </h1>
+                    <p class="text-muted small mb-0">Customer: <strong>{{ subscription.customer.email }}</strong> | Plan: <strong>{{ subscription.plan.name }}</strong> | Status: <span class="badge bg-secondary text-uppercase">{{ subscription.status }}</span></p>
+                </div>
+                <a href="{% url 'subscriptions:subscription_detail' pk=subscription.pk %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {{ lines_formset.management_form }}
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 45%;">Product</th>
+                                <th style="width: 35%;">Variant</th>
+                                <th style="width: 10%;">Quantity</th>
+                                <th style="width: 10%; text-align: center;">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l_form in lines_formset %}
+                                <tr>
+                                    <td>
+                                        {{ l_form.id }}
+                                        {{ l_form.product }}
+                                        {% if l_form.product.errors %}
+                                            <div class="text-danger small">{{ l_form.product.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ l_form.variant }}
+                                        {% if l_form.variant.errors %}
+                                            <div class="text-danger small">{{ l_form.variant.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ l_form.quantity }}
+                                        {% if l_form.quantity.errors %}
+                                            <div class="text-danger small">{{ l_form.quantity.errors.0 }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if l_form.instance.pk %}
+                                            {{ l_form.DELETE }}
+                                        {% else %}
+                                            <span class="text-muted small">New</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'subscriptions:subscription_detail' pk=subscription.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i>Save Line Items
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

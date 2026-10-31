@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Management - Admin - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>Staff Management</h1>
+        <p class="text-muted mb-0">Admin view: oversee staff accounts and provision new staff team members.</p>
+    </div>
+    <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2">
+        <i class="bi bi-shield-lock me-1"></i> Admin Only
+    </span>
+</div>
+
+<div class="row g-4">
+    <!-- Staff Creation Form Column -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 p-4 bg-white h-100">
+            <h2 class="h5 fw-bold mb-3"><i class="bi bi-person-plus text-primary me-1"></i> Create New Staff Member</h2>
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold small">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold small">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold small">Staff Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.phone.id_for_label }}" class="form-label fw-semibold small">Phone Number</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label for="{{ form.temporary_password.id_for_label }}" class="form-label fw-semibold small">Temporary Password</label>
+                    {{ form.temporary_password }}
+                    <div class="form-text small">Must be > 8 characters with 1 uppercase, 1 lowercase, and 1 special symbol.</div>
+                    {% if form.temporary_password.errors %}
+                        <div class="text-danger small mt-1">{{ form.temporary_password.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-check me-1"></i> Provision Staff Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Existing Staff List Column -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 p-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0"><i class="bi bi-person-badge text-secondary me-1"></i> Current Staff Members</h2>
+                <span class="badge bg-secondary">{{ staff_users.count }} Staff</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Staff Member</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for staff in staff_users %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ staff.get_full_name|default:"(No name)" }}</div>
+                                    <div class="text-muted small">{{ staff.phone|default:"No phone" }}</div>
+                                </td>
+                                <td>
+                                    <code>{{ staff.email }}</code>
+                                </td>
+                                <td>
+                                    {% if staff.is_active %}
+                                        <span class="badge bg-success-subtle text-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-subtle text-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">
+                                    {{ staff.date_joined|date:"M d, Y" }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+                                    No staff accounts provisioned yet.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

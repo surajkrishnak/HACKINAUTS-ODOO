@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}My Subscriptions - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-box-seam me-2 text-primary"></i>My Subscriptions</h2>
+        <p class="text-muted mb-0">Review your subscribed plans, recurring amounts, and lifecycle controls.</p>
+    </div>
+    <div>
+        <a href="{% url 'portal:discount_request' %}" class="btn btn-outline-primary">
+            <i class="bi bi-tag me-1"></i>Request Bulk Discount
+        </a>
+    </div>
+</div>
+
+<!-- Customer KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white p-3 border-start border-4 border-success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Active Subscriptions</div>
+                    <div class="fs-4 fw-bold text-success mt-1">{{ active_count }}</div>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle">
+                    <i class="bi bi-check-circle fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-3 bg-white p-3 border-start border-4 border-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold">Total Recurring Amount</div>
+                    <div class="fs-4 fw-bold text-primary mt-1">₹{{ total_recurring|floatformat:2 }}</div>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle">
+                    <i class="bi bi-arrow-repeat fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subscriptions Table -->
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Subscription #</th>
+                        <th>Plan</th>
+                        <th>Start Date</th>
+                        <th>Expiry Date</th>
+                        <th>Next Billing Date</th>
+                        <th class="text-end">Recurring Total</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end pe-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td class="ps-4 fw-semibold">
+                            <a href="{% url 'portal:subscription_detail' sub.pk %}" class="text-decoration-none">
+                                {{ sub.number }}
+                            </a>
+                            {% if sub.is_paused %}
+                                <span class="badge bg-warning text-dark ms-1">Paused</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="fw-semibold text-dark">{{ sub.plan.name }}</span>
+                            <span class="badge bg-light text-dark border ms-1">{{ sub.plan.get_billing_period_display }}</span>
+                        </td>
+                        <td>{{ sub.start_date }}</td>
+                        <td>{{ sub.expiry_date|default:"&mdash;" }}</td>
+                        <td>
+                            <span class="fw-semibold">{{ sub.next_billing_date|default:"&mdash;" }}</span>
+                        </td>
+                        <td class="text-end fw-bold text-dark">₹{{ sub.total_amount }}</td>
+                        <td class="text-center">
+                            {% if sub.status == 'draft' %}
+                                <span class="badge bg-secondary">Draft</span>
+                            {% elif sub.status == 'quotation' %}
+                                <span class="badge bg-info text-dark">Quotation Sent</span>
+                            {% elif sub.status == 'confirmed' %}
+                                <span class="badge bg-primary">Confirmed</span>
+                            {% elif sub.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                            {% elif sub.status == 'closed' %}
+                                <span class="badge bg-dark">Closed</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'portal:subscription_detail' sub.pk %}" class="btn btn-sm btn-outline-primary">
+                                View Details &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-box-seam fs-1 d-block mb-2 text-secondary"></i>
+                            <h5 class="fw-bold text-dark">No Subscriptions Found</h5>
+                            <p class="mb-0">You do not have any software subscriptions registered yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="card-footer bg-white border-0 py-3">
+        <nav aria-label="Subscriptions pagination">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Request Bulk Seats Discount - Customer Portal{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle">
+                        <i class="bi bi-tag-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0 text-dark">Request Bulk Discount</h4>
+                        <small class="text-muted">Special pricing for teams & enterprise volume</small>
+                    </div>
+                </div>
+
+                <p class="text-muted small">
+                    Scaling up your organization? Submit a seat expansion request and our enterprise pricing team will review your account for custom tier discounts.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.subscription.id_for_label }}" class="form-label fw-semibold">Target Subscription</label>
+                        {{ form.subscription }}
+                        {% if form.subscription.errors %}
+                            <div class="text-danger small mt-1">{{ form.subscription.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.seats.id_for_label }}" class="form-label fw-semibold">Planned Seats / Volume</label>
+                        {{ form.seats }}
+                        <div class="form-text">{{ form.seats.help_text }}</div>
+                        {% if form.seats.errors %}
+                            <div class="text-danger small mt-1">{{ form.seats.errors|first }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.message.id_for_label }}" class="form-label fw-semibold">Message & Business Justification</label>
+                        {{ form.message }}
+                        <div class="form-text">{{ form.message.help_text }}</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                        <i class="bi bi-send-fill me-1"></i>Submit Discount Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previous Requests History Table -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Your Discount Requests History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Submitted</th>
+                                <th>Subscription</th>
+                                <th class="text-center">Seats</th>
+                                <th>Status</th>
+                                <th class="pe-4">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in requests_history %}
+                            <tr>
+                                <td class="ps-4 small text-muted">{{ req.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="fw-semibold">{{ req.subscription.number }}</span>
+                                    <div class="small text-muted">{{ req.subscription.plan.name }}</div>
+                                </td>
+                                <td class="text-center fw-bold">{{ req.seats }}</td>
+                                <td>
+                                    {% if req.status == 'approved' %}
+                                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                                    {% elif req.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split me-1"></i>Pending Review</span>
+                                    {% elif req.status == 'rejected' %}
+                                        <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Declined</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 small text-muted">{{ req.message|truncatechars:35|default:"&mdash;" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-tag fs-2 d-block mb-1 text-secondary"></i>
+                                    You have not submitted any bulk discount requests yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

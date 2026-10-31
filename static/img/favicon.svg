@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="brightloopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#brightloopGrad)" />
+  <path d="M16 8 A 7 7 0 1 1 9.5 18 L 8 18 A 8.5 8.5 0 1 0 16 6.5 L 16 4 L 20 7.5 L 16 11 Z" fill="#ffffff" />
+</svg>

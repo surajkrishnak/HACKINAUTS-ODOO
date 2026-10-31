@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}Edit Plan{% else %}Create Plan{% endif %} - Brightloop{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-3">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h4 fw-bold mb-0">
+                    <i class="bi bi-calendar3-range text-primary me-2"></i>
+                    {% if form.instance.pk %}Edit Plan: {{ form.instance.name }}{% else %}New Billing Plan{% endif %}
+                </h1>
+                <a href="{% url 'catalog:plan_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-7">
+                        <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">Plan Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-5">
+                        <label for="{{ form.billing_period.id_for_label }}" class="form-label fw-semibold">Billing Frequency</label>
+                        {{ form.billing_period }}
+                        {% if form.billing_period.errors %}
+                            <div class="text-danger small mt-1">{{ form.billing_period.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.price.id_for_label }}" class="form-label fw-semibold">Price per Period (₹)</label>
+                        {{ form.price }}
+                        {% if form.price.errors %}
+                            <div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.min_quantity.id_for_label }}" class="form-label fw-semibold">Minimum Quantity / Seats</label>
+                        {{ form.min_quantity }}
+                        <div class="form-text small">At least 1 seat required.</div>
+                        {% if form.min_quantity.errors %}
+                            <div class="text-danger small mt-1">{{ form.min_quantity.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.available_from.id_for_label }}" class="form-label fw-semibold">Available From Date</label>
+                        {{ form.available_from }}
+                        {% if form.available_from.errors %}
+                            <div class="text-danger small mt-1">{{ form.available_from.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label for="{{ form.available_to.id_for_label }}" class="form-label fw-semibold">Available To Date</label>
+                        {{ form.available_to }}
+                        <div class="form-text small">Must be after Available From date.</div>
+                        {% if form.available_to.errors %}
+                            <div class="text-danger small mt-1">{{ form.available_to.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Lifecycle Flags with Help Text -->
+                <div class="border rounded-3 p-3 bg-light-subtle mb-4">
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-toggle-on text-primary me-1"></i> Lifecycle Configuration Flags</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.closable }}
+                                <label for="{{ form.closable.id_for_label }}" class="form-check-label fw-semibold">
+                                    Closable Early
+                                </label>
+                                <div class="form-text small">Allows staff or customers to close an active subscription early.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.pausable }}
+                                <label for="{{ form.pausable.id_for_label }}" class="form-check-label fw-semibold">
+                                    Pausable
+                                </label>
+                                <div class="form-text small">Allows pausing and resuming active subscriptions.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.renewable }}
+                                <label for="{{ form.renewable.id_for_label }}" class="form-check-label fw-semibold">
+                                    Renewable
+                                </label>
+                                <div class="form-text small">Permits extending the plan's validity beyond its end date.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.auto_close }}
+                                <label for="{{ form.auto_close.id_for_label }}" class="form-check-label fw-semibold">
+                                    Auto-Close on Expiration
+                                </label>
+                                <div class="form-text small">Automatically deactivates plan when available_to has passed.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4 form-check">
+                    {{ form.is_active }}
+                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label fw-semibold">
+                        Active in Catalog
+                    </label>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'catalog:plan_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-save me-1"></i>Save Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

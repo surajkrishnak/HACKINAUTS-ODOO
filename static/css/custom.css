@@ -1,0 +1,98 @@
+/* Brightloop Custom Design System */
+:root {
+    --primary-color: #0d6efd;
+    --primary-hover: #0b5ed7;
+    --dark-bg: #0f172a;
+    --light-bg: #f8fafc;
+    --card-border: rgba(226, 232, 240, 0.8);
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+}
+
+body {
+    background-color: var(--light-bg);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Brand Text Gradient */
+.text-gradient {
+    background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Standardized Card Styling */
+.card {
+    border-radius: 0.875rem;
+    border: 1px solid var(--card-border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Breadcrumbs Polish */
+.breadcrumb-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+.breadcrumb-item.active {
+    color: var(--text-muted);
+}
+
+/* Standard Status Badge Classes */
+.badge {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    padding: 0.4em 0.7em;
+}
+
+.badge-draft { background-color: #6c757d; color: #ffffff; }
+.badge-quotation { background-color: #0dcaf0; color: #000000; }
+.badge-confirmed { background-color: #0d6efd; color: #ffffff; }
+.badge-active { background-color: #198754; color: #ffffff; }
+.badge-paused { background-color: #ffc107; color: #000000; }
+.badge-closed { background-color: #212529; color: #ffffff; }
+.badge-paid { background-color: #198754; color: #ffffff; }
+.badge-cancelled { background-color: #343a40; color: #ffffff; }
+.badge-overdue { background-color: #dc3545; color: #ffffff; }
+
+/* Sticky Table Headers for Large Lists */
+.table-responsive {
+    max-height: 75vh;
+}
+.table-sticky thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f1f5f9 !important;
+}
+
+/* Buttons Focus Accessibility */
+.btn:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+/* Submitting / Loading Button Animation */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+/* Print Styles */
+@media print {
+    nav, footer, .no-print, .btn, .pagination {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+}
