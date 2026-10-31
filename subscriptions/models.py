@@ -137,6 +137,12 @@ class Subscription(models.Model):
             models.Index(fields=["customer", "status"], name="idx_sub_cust_status"),
             models.Index(fields=["status", "next_billing_date"], name="idx_sub_status_nextbill"),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(expiry_date__isnull=True) | models.Q(expiry_date__gte=models.F("start_date")),
+                name="sub_expiry_gte_start_date",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.number} - {self.customer.email} ({self.get_status_display()})"
@@ -191,6 +197,16 @@ class SubscriptionLine(models.Model):
         ordering = ["id"]
         verbose_name = "Subscription Line"
         verbose_name_plural = "Subscription Lines"
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(quantity__gt=0),
+                name="sub_line_qty_positive",
+            ),
+            models.CheckConstraint(
+                check=models.Q(unit_price__gte=0),
+                name="sub_line_price_non_negative",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.subscription.number} - {self.product.name} x {self.quantity}"

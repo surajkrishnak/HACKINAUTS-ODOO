@@ -256,3 +256,45 @@ class SubscriptionTests(TestCase):
         # Wizard
         wizard_resp = self.client.get(reverse("subscriptions:subscription_from_template"))
         self.assertEqual(wizard_resp.status_code, 200)
+
+    # 9. Database Check Constraints
+    def test_database_check_constraints(self):
+        from django.db import IntegrityError, transaction
+
+        # Expiry date before start date should fail DB constraint
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Subscription.objects.create(
+                    number="SUB-INVALID-DATES",
+                    customer=self.customer,
+                    plan=self.plan_closable,
+                    start_date=self.today,
+                    expiry_date=self.today - datetime.timedelta(days=1),
+                )
+
+        # Quantity <= 0 should fail DB constraint
+        sub = Subscription.objects.create(
+            number="SUB-VALID-01",
+            customer=self.customer,
+            plan=self.plan_closable,
+            start_date=self.today,
+        )
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                SubscriptionLine.objects.create(
+                    subscription=sub,
+                    product=self.product_erp,
+                    quantity=0,
+                    unit_price=Decimal("100.00"),
+                )
+
+        # Negative unit price should fail DB constraint
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                SubscriptionLine.objects.create(
+                    subscription=sub,
+                    product=self.product_erp,
+                    quantity=1,
+                    unit_price=Decimal("-10.00"),
+                )
+

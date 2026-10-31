@@ -171,6 +171,7 @@ erDiagram
 
 - **Money is exact.** All amounts use `DecimalField(12, 2)`, never floats.
 - **Price snapshots.** Unit price and tax rate are copied onto subscription and invoice lines, so old invoices never change when the catalog does.
+- **Database integrity check constraints.** PostgreSQL-level `CheckConstraint` rules prevent negative unit prices (`>= 0`), zero/negative quantities (`> 0`), and invalid subscription date ranges (`expiry_date >= start_date`).
 - **No double billing.** A unique constraint on invoice (subscription, period start, period end) plus an idempotent billing command that also catches up on missed periods.
 - **Safe discount limits.** Discount rows are locked with `select_for_update()` inside a transaction, so concurrent runs cannot exceed the usage limit.
 - **Business logic in services.** Invoice generation, status transitions and discounts live in `services.py`, so the UI and the billing command share the same code.
